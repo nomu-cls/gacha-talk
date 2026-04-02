@@ -7,9 +7,10 @@ import { ResultScreen } from './ResultScreen'
 interface Props {
   activeRound: GachaRound | null
   onRoundChange: () => void
+  onExitAdmin?: () => void
 }
 
-export function AdminPanel({ activeRound, onRoundChange }: Props) {
+export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
   const [topics, setTopics] = useState<Topic[]>([])
   const [rounds, setRounds] = useState<GachaRound[]>([])
   const [selectedSpeaker, setSelectedSpeaker] = useState(SPEAKERS[0].id)
@@ -170,7 +171,15 @@ export function AdminPanel({ activeRound, onRoundChange }: Props) {
             <span className="text-white text-[10px] font-black px-2 py-0.5 rounded-full"
               style={{ background: 'linear-gradient(135deg, #e84393, #6c5ce7)' }}>ADMIN</span>
           </div>
-          <div className="text-xs font-bold" style={{ color: 'var(--text2)' }}>総お題数: {topics.length}</div>
+          <div className="flex items-center gap-4">
+            <div className="text-xs font-bold" style={{ color: 'var(--text2)' }}>総お題数: {topics.length}</div>
+            {onExitAdmin && (
+              <button onClick={onExitAdmin} className="text-[11px] font-bold px-3 py-1.5 rounded-full"
+                style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text2)' }}>
+                ✖ 閉じる
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
