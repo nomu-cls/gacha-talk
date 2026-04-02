@@ -62,7 +62,9 @@ export function TopicSubmit({ nickname }: Props) {
         style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.3)' }}>
         <div className="flex items-center justify-between max-w-lg mx-auto">
           <div className="flex items-center gap-2">
-            <img src="/gacha_machine.png" className="w-7 h-7 object-contain" />
+            <div className="w-8 h-8 bg-white/90 rounded-xl flex items-center justify-center shadow-sm border border-white/50 overflow-hidden">
+              <img src="/gacha_machine.png" className="w-6 h-6 object-contain rounded-md" style={{ mixBlendMode: 'multiply' }} />
+            </div>
             <span className="font-black text-sm"
               style={{
                 background: 'linear-gradient(135deg, #e84393, #f39c12)',
@@ -171,59 +173,68 @@ export function TopicSubmit({ nickname }: Props) {
           </form>
         )}
 
-        {/* All Topics - grouped by speaker */}
-        {SPEAKERS.map(speaker => {
-          const sTopics = topics.filter(t => t.speaker_id === speaker.id)
-          if (sTopics.length === 0) return null
-          return (
-            <div key={speaker.id} className="animate-fade-in">
-              <div className="flex items-center gap-2 mb-3">
-                <img src={speaker.image} alt={speaker.name}
-                  className="w-7 h-7 rounded-full object-cover"
-                  style={{ border: `2px solid ${speaker.color}30` }} />
-                <span className="text-sm font-bold" style={{ color: speaker.color }}>
-                  {speaker.name.split('（')[0]}
+        {/* Topic Count Summary */}
+        <div className="p-4 text-center" style={{
+          background: 'rgba(255,255,255,0.75)', borderRadius: 'var(--radius)',
+          backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.5)',
+          boxShadow: '4px 4px 12px rgba(0,0,0,0.03)',
+        }}>
+          <p className="text-xs font-bold mb-3" style={{ color: 'var(--text2)' }}>
+            🎰 みんなからのお題（ガチャで抽選！）
+          </p>
+          <div className="flex justify-center gap-4">
+            {SPEAKERS.map(s => (
+              <div key={s.id} className="flex items-center gap-1.5">
+                <img src={s.image} className="w-6 h-6 rounded-full object-cover"
+                  style={{ border: `2px solid ${s.color}30` }} />
+                <span className="text-lg font-black" style={{ color: s.color }}>
+                  {speakerTopicCount(s.id)}
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                  style={{ background: speaker.bg, color: speaker.color }}>
-                  {sTopics.length}件
-                </span>
+                <span className="text-[10px] font-bold" style={{ color: 'var(--text3)' }}>件</span>
               </div>
-              <div className="space-y-2">
-                {sTopics.map(topic => {
-                  const isMine = topic.submitted_by === nickname
-                  return (
-                    <div key={topic.id}
-                      className="flex items-start gap-3 px-4 py-3 group"
-                      style={{
-                        background: speaker.light, borderRadius: '16px',
-                        border: `1px solid ${speaker.color}10`,
-                        boxShadow: `3px 3px 8px ${speaker.color}06`,
-                      }}>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{topic.text}</p>
-                        <p className="text-[10px] mt-1 font-bold" style={{ color: 'var(--text3)' }}>
-                          by {topic.submitted_by}
-                        </p>
-                      </div>
-                      {isMine && (
-                        <button onClick={() => deleteMyTopic(topic.id)}
-                          className="text-[10px] font-bold shrink-0 px-2 py-1 rounded-lg opacity-50 hover:opacity-100 transition-opacity"
-                          style={{ color: '#e84393', background: 'rgba(232,67,147,0.08)' }}>
-                          削除
-                        </button>
-                      )}
+            ))}
+          </div>
+        </div>
+
+        {/* My Topics Only */}
+        {topics.filter(t => t.submitted_by === nickname).length > 0 && (
+          <div className="animate-fade-in">
+            <h3 className="text-sm font-black mb-3 flex items-center gap-1" style={{ color: 'var(--text)' }}>
+              ✏️ あなたの投稿
+            </h3>
+            <div className="space-y-2">
+              {topics.filter(t => t.submitted_by === nickname).map(topic => {
+                const speaker = SPEAKERS.find(s => s.id === topic.speaker_id)
+                return (
+                  <div key={topic.id}
+                    className="flex items-start gap-3 px-4 py-3"
+                    style={{
+                      background: speaker?.light || 'rgba(255,255,255,0.7)',
+                      borderRadius: '16px',
+                      border: `1px solid ${speaker?.color || '#ddd'}10`,
+                    }}>
+                    <img src={speaker?.image} className="w-6 h-6 rounded-full object-cover shrink-0 mt-0.5"
+                      style={{ border: `2px solid ${speaker?.color}30` }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{topic.text}</p>
                     </div>
-                  )
-                })}
-              </div>
+                    <button onClick={() => deleteMyTopic(topic.id)}
+                      className="text-[10px] font-bold shrink-0 px-2 py-1 rounded-lg opacity-50 hover:opacity-100 transition-opacity"
+                      style={{ color: '#e84393', background: 'rgba(232,67,147,0.08)' }}>
+                      削除
+                    </button>
+                  </div>
+                )
+              })}
             </div>
-          )
-        })}
+          </div>
+        )}
 
         {topics.length === 0 && (
           <div className="text-center py-12" style={{ color: 'var(--text3)' }}>
-            <img src="/gacha_machine.png" className="w-16 h-16 mx-auto mb-3 opacity-30 object-contain" />
+            <div className="mx-auto w-20 h-20 bg-white/50 rounded-3xl flex items-center justify-center mb-3 overflow-hidden">
+              <img src="/gacha_machine.png" className="w-14 h-14 opacity-40 object-contain rounded-2xl" style={{ mixBlendMode: 'multiply' }} />
+            </div>
             <p className="text-sm font-bold">まだお題がありません</p>
             <p className="text-xs mt-1">上の登壇者を選んでお題を投稿してみましょう！ 🎉</p>
           </div>

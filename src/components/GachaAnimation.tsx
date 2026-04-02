@@ -48,13 +48,14 @@ export function GachaAnimation({ round }: Props) {
           <div className="relative w-36 h-36 mx-auto mb-6">
             <div className="absolute inset-0 rounded-full"
               style={{ border: `3px dashed ${speaker?.color}30`, animation: 'gachaSpin 1.5s linear infinite' }} />
-            <div className="absolute inset-4 rounded-full flex items-center justify-center"
+            <div className="absolute inset-4 rounded-full flex items-center justify-center overflow-hidden"
               style={{
-                background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)',
+                background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)',
                 boxShadow: '6px 6px 16px rgba(0,0,0,0.05)',
+                border: '3px solid rgba(255,255,255,0.8)',
                 animation: 'gachaBounce 0.4s ease-in-out infinite alternate',
               }}>
-              <img src="/gacha_machine.png" className="w-16 h-16 object-contain" style={{ mixBlendMode: 'multiply' }} />
+              <img src="/gacha_machine.png" className="w-14 h-14 object-contain rounded-2xl" style={{ mixBlendMode: 'multiply' }} />
             </div>
           </div>
           <p className="text-lg font-black" style={{ color: speaker?.color, animation: 'pulse 0.8s ease-in-out infinite' }}>

@@ -17,6 +17,14 @@ export function AdminPanel({ activeRound, onRoundChange }: Props) {
   const [loading, setLoading] = useState(false)
   const [showGuide, setShowGuide] = useState(false)
   const [gachaCount, setGachaCount] = useState(3)
+  const [adminTab, setAdminTab] = useState<'gacha' | 'poll'>('gacha')
+
+  // Quick Poll States
+  const [polls, setPolls] = useState<any[]>([])
+  const [pollQuestion, setPollQuestion] = useState('')
+  const [pollOptions, setPollOptions] = useState(['', '', ''])
+  const [pollVotes, setPollVotes] = useState<Record<string, number>>({})
+  const [pollSpeakerId, setPollSpeakerId] = useState(SPEAKERS[0].id)
 
   const fetchTopics = useCallback(async () => {
     const { data } = await supabase.from('gacha_topics').select('*').order('created_at', { ascending: false })
@@ -28,17 +36,37 @@ export function AdminPanel({ activeRound, onRoundChange }: Props) {
     if (data) setRounds(data as GachaRound[])
   }, [])
 
+  const fetchPolls = useCallback(async () => {
+    const { data: pollData } = await supabase.from('quick_polls').select('*').order('created_at', { ascending: false })
+    if (pollData) setPolls(pollData)
+
+    const activeIds = pollData?.filter(p => p.status === 'active').map(p => p.id) || []
+    if (activeIds.length > 0) {
+      const { data: voteData } = await supabase.from('quick_poll_votes').select('poll_id').in('poll_id', activeIds)
+      if (voteData) {
+        const counts: Record<string, number> = {}
+        voteData.forEach(v => { counts[v.poll_id] = (counts[v.poll_id] || 0) + 1 })
+        setPollVotes(counts)
+      }
+    }
+  }, [])
+
   useEffect(() => {
     fetchTopics()
     fetchRounds()
+    fetchPolls()
     const ch1 = supabase.channel('admin_topics')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'gacha_topics' }, fetchTopics).subscribe()
     const ch2 = supabase.channel('admin_rounds')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'gacha_rounds' }, () => { fetchRounds(); onRoundChange() }).subscribe()
     const ch3 = supabase.channel('admin_votes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'gacha_votes' }, fetchRounds).subscribe()
-    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); supabase.removeChannel(ch3) }
-  }, [fetchTopics, fetchRounds, onRoundChange])
+    const ch4 = supabase.channel('admin_quick_polls')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'quick_polls' }, fetchPolls).subscribe()
+    const ch5 = supabase.channel('admin_quick_poll_votes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'quick_poll_votes' }, fetchPolls).subscribe()
+    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); supabase.removeChannel(ch3); supabase.removeChannel(ch4); supabase.removeChannel(ch5) }
+  }, [fetchTopics, fetchRounds, fetchPolls, onRoundChange])
 
   async function deleteTopic(id: string) {
     await supabase.from('gacha_topics').delete().eq('id', id)
@@ -92,6 +120,37 @@ export function AdminPanel({ activeRound, onRoundChange }: Props) {
     ...s, count: topics.filter(t => t.speaker_id === s.id).length,
   }))
 
+  async function createPoll() {
+    const opts = pollOptions.filter(o => o.trim())
+    if (!pollQuestion.trim() || opts.length < 2) {
+      alert('質問と、2つ以上の選択肢を入力してください')
+      return
+    }
+    setLoading(true)
+    await supabase.from('quick_polls').insert({ 
+      question: pollQuestion, 
+      options: opts,
+      speaker_id: pollSpeakerId,
+      status: 'draft' 
+    })
+    setPollQuestion('')
+    setPollOptions(['', '', ''])
+    setLoading(false)
+  }
+
+  async function startPoll(id: string) {
+    if (activePoll) {
+      await supabase.from('quick_polls').update({ status: 'closed' }).eq('id', activePoll.id)
+    }
+    await supabase.from('quick_polls').update({ status: 'active' }).eq('id', id)
+  }
+
+  async function closePoll(id: string) {
+    await supabase.from('quick_polls').update({ status: 'closed' }).eq('id', id)
+  }
+
+  const activePoll = polls.find(p => p.status === 'active')
+
   return (
     <div className="min-h-dvh">
       {/* Header */}
@@ -101,7 +160,9 @@ export function AdminPanel({ activeRound, onRoundChange }: Props) {
       }}>
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/gacha_machine.png" className="w-7 h-7 object-contain" />
+            <div className="w-8 h-8 bg-white/90 rounded-xl flex items-center justify-center shadow-sm border border-white/50 overflow-hidden">
+              <img src="/gacha_machine.png" className="w-6 h-6 object-contain rounded-md" style={{ mixBlendMode: 'multiply' }} />
+            </div>
             <span className="font-black text-sm"
               style={{ background: 'linear-gradient(135deg, #e84393, #f39c12)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               ガチャトーク
@@ -207,6 +268,30 @@ export function AdminPanel({ activeRound, onRoundChange }: Props) {
           )}
         </div>
 
+        {/* 📑 タブナビゲーション */}
+        <div className="flex gap-3 px-1">
+          <button onClick={() => setAdminTab('gacha')}
+            className={`flex-1 py-3 text-sm font-black rounded-xl transition-all ${adminTab === 'gacha' ? 'shadow-md shadow-[rgba(232,67,147,0.15)]' : ''}`}
+            style={{
+              background: adminTab === 'gacha' ? 'linear-gradient(135deg, #e84393, #f39c12)' : 'rgba(255,255,255,0.6)',
+              color: adminTab === 'gacha' ? 'white' : 'var(--text2)',
+              border: adminTab === 'gacha' ? 'none' : '1px solid rgba(0,0,0,0.06)',
+            }}>
+            🎰 ガチャとお題
+          </button>
+          <button onClick={() => setAdminTab('poll')}
+            className={`flex-1 py-3 text-sm font-black rounded-xl transition-all ${adminTab === 'poll' ? 'shadow-md shadow-[rgba(168,85,247,0.15)]' : ''}`}
+            style={{
+              background: adminTab === 'poll' ? 'linear-gradient(135deg, #a855f7, #6c5ce7)' : 'rgba(255,255,255,0.6)',
+              color: adminTab === 'poll' ? 'white' : 'var(--text2)',
+              border: adminTab === 'poll' ? 'none' : '1px solid rgba(0,0,0,0.06)',
+            }}>
+            🎤 会場アンケート
+          </button>
+        </div>
+
+        {adminTab === 'gacha' && (
+          <div className="space-y-8 animate-fade-in">
         {/* Gacha Control */}
         <div className="p-6" style={{
           background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)',
@@ -214,7 +299,10 @@ export function AdminPanel({ activeRound, onRoundChange }: Props) {
           boxShadow: '6px 6px 18px rgba(0,0,0,0.04)',
         }}>
           <h3 className="text-lg font-black mb-4 flex items-center gap-2" style={{ color: 'var(--text)' }}>
-            <img src="/gacha_machine.png" className="w-6 h-6 object-contain" /> ガチャコントロール
+            <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center shadow-sm border border-black/5 overflow-hidden">
+              <img src="/gacha_machine.png" className="w-6 h-6 object-contain rounded-md" style={{ mixBlendMode: 'multiply' }} />
+            </div>
+            ガチャコントロール
           </h3>
 
           {!activeRound || activeRound.status === 'closed' ? (
@@ -421,6 +509,125 @@ export function AdminPanel({ activeRound, onRoundChange }: Props) {
             </div>
           </div>
         )}
+      </div>
+      )}
+
+      {adminTab === 'poll' && (
+      <div className="space-y-8 animate-fade-in">
+        {/* 🤔 登壇者からのクイックアンケート機能 */}
+        <div className="p-6" style={{
+          background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)',
+          borderRadius: 'var(--radius)', border: '1px solid rgba(255,255,255,0.6)',
+          boxShadow: '6px 6px 18px rgba(0,0,0,0.04)',
+        }}>
+          <h3 className="text-lg font-black mb-4 flex items-center gap-2" style={{ color: 'var(--text)' }}>
+            <span>🎤 会場アンケート</span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: '#f3e8ff', color: '#9333ea' }}>NEW</span>
+          </h3>
+
+          {activePoll ? (
+            <div className="p-5" style={{ background: '#f3e8ff', borderRadius: '16px', border: '1px solid #d8b4fe' }}>
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-bold" style={{ color: '#7e22ce' }}>配信中：{activePoll.question}</h4>
+                <div className="text-xs font-black px-3 py-1 rounded-full bg-white" style={{ color: '#9333ea' }}>
+                  現在 {pollVotes[activePoll.id] || 0} 票
+                </div>
+              </div>
+              <ul className="mb-5 space-y-2">
+                {activePoll.options.map((opt: string, i: number) => (
+                  <li key={i} className="text-xs font-bold px-3 py-2 bg-white rounded-lg" style={{ color: 'var(--text)' }}>
+                    {String.fromCharCode(65 + i)}. {opt}
+                  </li>
+                ))}
+              </ul>
+              <button onClick={() => closePoll(activePoll.id)}
+                className="w-full py-3 font-bold text-sm text-white"
+                style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)', borderRadius: '12px', border: 'none' }}>
+                アンケートを終了する
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                {SPEAKERS.map(s => (
+                  <button key={s.id} onClick={() => setPollSpeakerId(s.id)}
+                    className="p-1 rounded-full transition-all"
+                    style={{ border: `3px solid ${pollSpeakerId === s.id ? s.color : 'transparent'}` }}>
+                    <img src={s.image} className="w-8 h-8 rounded-full object-cover" />
+                  </button>
+                ))}
+              </div>
+
+              <input type="text" placeholder="質問を入力...（例：今日一番印象に残ったのは？）"
+                value={pollQuestion} onChange={e => setPollQuestion(e.target.value)}
+                className="w-full px-4 py-3 text-sm font-bold outline-none"
+                style={{ background: 'white', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.06)', color: 'var(--text)' }} />
+              
+              <div className="space-y-2 pl-2">
+                {pollOptions.map((opt, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs font-bold" style={{ color: 'var(--text3)' }}>{String.fromCharCode(65 + i)}</span>
+                    <input type="text" placeholder={`選択肢 ${i + 1}`}
+                      value={opt} onChange={e => {
+                        const newOpts = [...pollOptions]
+                        newOpts[i] = e.target.value
+                        setPollOptions(newOpts)
+                      }}
+                      className="flex-1 px-3 py-2 text-sm font-bold outline-none"
+                      style={{ background: 'white', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.06)' }} />
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => { if(pollOptions.length < 5) setPollOptions([...pollOptions, '']) }}
+                  className="px-4 py-3 text-xs font-bold transition-all"
+                  style={{ background: 'rgba(0,0,0,0.04)', color: 'var(--text2)', borderRadius: '12px' }}>
+                  ＋ 選択肢追加
+                </button>
+                <button onClick={createPoll} disabled={loading}
+                  className="flex-1 py-3 text-sm font-bold transition-all hover:opacity-90"
+                  style={{ background: '#f3e8ff', color: '#9333ea', borderRadius: '12px' }}>
+                  📦 事前にストックする（下書き）
+                </button>
+              </div>
+
+              {/* Draft Polls List */}
+              {polls.filter(p => p.status === 'draft').length > 0 && (
+                <div className="pt-6 mt-6 border-t border-purple-100">
+                  <h4 className="text-xs font-black mb-3 flex items-center gap-2" style={{ color: '#9333ea' }}>
+                    📦 ストック済みのアンケート（出番待ち）
+                  </h4>
+                  <div className="space-y-3">
+                    {polls.filter(p => p.status === 'draft').map(dp => {
+                      const sp = SPEAKERS.find(s => s.id === dp.speaker_id) || SPEAKERS[0]
+                      return (
+                        <div key={dp.id} className="p-3 bg-white rounded-xl border border-black/5 flex items-center gap-3">
+                          <img src={sp.image} className="w-10 h-10 rounded-full object-cover shrink-0"
+                            style={{ border: `2px solid ${sp.color}40` }} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-gray-800 line-clamp-1">{dp.question}</p>
+                            <p className="text-[10px] text-gray-500 line-clamp-1 mt-0.5">
+                              {dp.options.map((o: string, i: number) => `${String.fromCharCode(65 + i)}: ${o}`).join(' / ')}
+                            </p>
+                          </div>
+                          <button onClick={() => startPoll(dp.id)}
+                            className="shrink-0 px-3 py-2 text-xs font-bold text-white shadow-sm rounded-lg"
+                            style={{ background: 'linear-gradient(135deg, #a855f7, #6c5ce7)' }}>
+                            ▶ スタート
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      )}
+
       </div>
     </div>
   )

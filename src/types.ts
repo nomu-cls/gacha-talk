@@ -18,7 +18,7 @@ export interface GachaRound {
   id: string
   speaker_id: string
   topic_ids: string[]
-  status: 'gacha' | 'voting' | 'closed'
+  status: 'gacha' | 'voting' | 'closed' | 'archived'
   voting_deadline: string | null
   winner_topic_id: string | null
   created_at: string

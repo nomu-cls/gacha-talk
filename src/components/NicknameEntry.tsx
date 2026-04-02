@@ -13,10 +13,12 @@ export function NicknameEntry({ onSubmit }: Props) {
       <div className="w-full max-w-sm animate-fade-in">
 
         {/* Gacha Machine */}
-        <div className="text-center mb-4">
-          <img src="/gacha_machine.png" alt="ガチャマシン"
-            className="w-24 h-24 mx-auto object-contain animate-float"
-            style={{ mixBlendMode: 'multiply', filter: 'drop-shadow(0 4px 12px rgba(232,67,147,0.15))' }} />
+        <div className="text-center mb-5 mt-2">
+          <div className="mx-auto w-28 h-28 bg-white/90 backdrop-blur-md rounded-[2.5rem] shadow-[0_8px_32px_rgba(232,67,147,0.25)] border-[3px] border-white/80 flex items-center justify-center animate-float overflow-hidden">
+            <img src="/gacha_machine.png" alt="ガチャマシン"
+              className="w-20 h-20 object-contain rounded-3xl"
+              style={{ mixBlendMode: 'multiply' }} />
+          </div>
         </div>
 
         {/* Title */}
@@ -72,39 +74,47 @@ export function NicknameEntry({ onSubmit }: Props) {
           </div>
         </div>
 
-        {/* Nickname Input */}
-        <form onSubmit={(e) => { e.preventDefault(); if (name.trim()) onSubmit(name.trim()) }}
-          className="space-y-4">
-          <div>
-            <label className="block text-xs font-black tracking-widest uppercase mb-2"
-              style={{ color: 'var(--text2)' }}>
-              ニックネーム
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="例：はなこ"
-              autoFocus
-              className="w-full px-5 py-4 text-lg font-bold outline-none"
-              style={{
-                background: 'rgba(255,255,255,0.6)', borderRadius: '16px',
-                border: '2px solid rgba(232,67,147,0.1)',
-                boxShadow: 'var(--card-inset)', color: 'var(--text)',
-              }}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={!name.trim()}
-            className="w-full py-4 font-black text-lg neu-btn-primary"
-          >
-            🎰 参加する
-          </button>
-          <p className="text-center text-xs font-bold" style={{ color: 'var(--text3)' }}>
-            ※投稿のニックネームとして使われます
-          </p>
-        </form>
+        {/* Nickname Input - white soft card */}
+        <div style={{
+          background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(16px)',
+          borderRadius: 'var(--radius)',
+          border: '1px solid rgba(255,255,255,0.7)',
+          boxShadow: '6px 6px 20px rgba(0,0,0,0.04), -3px -3px 10px rgba(255,255,255,0.8)',
+          padding: '24px',
+        }}>
+          <form onSubmit={(e) => { e.preventDefault(); if (name.trim()) onSubmit(name.trim()) }}
+            className="space-y-4">
+            <div>
+              <label className="block text-xs font-black tracking-widest uppercase mb-2"
+                style={{ color: 'var(--text2)' }}>
+                ニックネーム
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="例：はなこ"
+                autoFocus
+                className="w-full px-5 py-4 text-lg font-bold outline-none"
+                style={{
+                  background: 'rgba(255,255,255,0.7)', borderRadius: '16px',
+                  border: '2px solid rgba(232,67,147,0.1)',
+                  boxShadow: 'inset 2px 2px 6px rgba(0,0,0,0.04)', color: 'var(--text)',
+                }}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!name.trim()}
+              className="w-full py-4 font-black text-lg neu-btn-primary"
+            >
+              🎰 参加する
+            </button>
+            <p className="text-center text-xs font-bold" style={{ color: 'var(--text3)' }}>
+              ※投稿のニックネームとして使われます
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   )
