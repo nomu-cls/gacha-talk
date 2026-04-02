@@ -146,6 +146,11 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
     setLoading(false)
   }
 
+  async function deletePoll(id: string) {
+    if (!window.confirm('このアンケートを削除してもよろしいですか？')) return
+    await supabase.from('quick_polls').delete().eq('id', id)
+  }
+
   async function startPoll(id: string) {
     if (activePoll) {
       await supabase.from('quick_polls').update({ status: 'closed' }).eq('id', activePoll.id)
@@ -591,6 +596,16 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
                       }}
                       className="flex-1 px-3 py-2 text-sm font-bold outline-none"
                       style={{ background: 'white', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.06)' }} />
+                    {pollOptions.length > 2 && (
+                      <button onClick={() => {
+                        const newOpts = [...pollOptions]
+                        newOpts.splice(i, 1)
+                        setPollOptions(newOpts)
+                      }}
+                      className="text-[10px] font-bold px-2 py-1.5 rounded bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-500 transition-colors">
+                        ✖
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -627,11 +642,17 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
                               {dp.options.map((o: string, i: number) => `${String.fromCharCode(65 + i)}: ${o}`).join(' / ')}
                             </p>
                           </div>
-                          <button onClick={() => startPoll(dp.id)}
-                            className="shrink-0 px-3 py-2 text-xs font-bold text-white shadow-sm rounded-lg"
-                            style={{ background: 'linear-gradient(135deg, #a855f7, #6c5ce7)' }}>
-                            ▶ スタート
-                          </button>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button onClick={() => startPoll(dp.id)}
+                              className="px-3 py-2 text-xs font-bold text-white shadow-sm rounded-lg"
+                              style={{ background: 'linear-gradient(135deg, #a855f7, #6c5ce7)' }}>
+                              ▶ スタート
+                            </button>
+                            <button onClick={() => deletePoll(dp.id)}
+                              className="px-2 py-2 text-xs font-bold text-gray-400 bg-gray-100 rounded-lg hover:bg-red-100 hover:text-red-500 transition-colors">
+                              🗑️
+                            </button>
+                          </div>
                         </div>
                       )
                     })}
@@ -651,8 +672,12 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
                       const total = pollVotes[cp.id] || 0
                       const detailed = pollDetailedVotes[cp.id] || {}
                       return (
-                        <div key={cp.id} className="p-4 bg-white/60 rounded-xl border border-black/5">
-                          <div className="flex items-start gap-3 mb-3">
+                        <div key={cp.id} className="p-4 bg-white/60 rounded-xl border border-black/5 relative relative group">
+                          <button onClick={() => deletePoll(cp.id)}
+                            className="absolute top-2 right-2 px-2 py-1 text-[10px] font-bold text-gray-400 bg-white border border-gray-200 rounded-md hover:bg-red-50 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                            削除
+                          </button>
+                          <div className="flex items-start gap-3 mb-3 pr-8">
                             <img src={sp.image} className="w-8 h-8 rounded-full object-cover shrink-0 grayscale opacity-60" />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-bold text-gray-600 leading-tight">{cp.question}</p>
