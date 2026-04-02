@@ -3,9 +3,10 @@ import { SPEAKERS } from '../types'
 
 interface Props {
   onSubmit: (name: string) => void
+  onAdminClick?: () => void
 }
 
-export function NicknameEntry({ onSubmit }: Props) {
+export function NicknameEntry({ onSubmit, onAdminClick }: Props) {
   const [name, setName] = useState('')
 
   return (
@@ -115,6 +116,15 @@ export function NicknameEntry({ onSubmit }: Props) {
             </p>
           </form>
         </div>
+
+        {/* Admin Link */}
+        {onAdminClick && (
+          <div className="text-center mt-8">
+            <button onClick={onAdminClick} className="text-[11px] font-bold opacity-50 hover:opacity-100 transition-opacity" style={{ color: 'var(--text2)' }}>
+              ▶ 管理者はこちら
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

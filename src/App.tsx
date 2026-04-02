@@ -103,7 +103,7 @@ export default function App() {
   // Render main screen component based on state
   const renderScreen = () => {
     if (!nickname) {
-      return <NicknameEntry onSubmit={handleSetNickname} />
+      return <NicknameEntry onSubmit={handleSetNickname} onAdminClick={() => setShowPasswordDialog(true)} />
     }
 
     if (activePoll) {
