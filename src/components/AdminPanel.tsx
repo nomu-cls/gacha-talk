@@ -174,9 +174,9 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
           <div className="flex items-center gap-4">
             <div className="text-xs font-bold" style={{ color: 'var(--text2)' }}>総お題数: {topics.length}</div>
             {onExitAdmin && (
-              <button onClick={onExitAdmin} className="text-[11px] font-bold px-3 py-1.5 rounded-full"
-                style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text2)' }}>
-                ✖ 閉じる
+              <button onClick={onExitAdmin} className="text-[11px] font-bold px-3 py-2 rounded-full shadow-sm hover:opacity-80 transition-all"
+                style={{ background: 'linear-gradient(135deg, #00b894, #00cec9)', color: 'white' }}>
+                👀 参加者画面に戻る
               </button>
             )}
           </div>
