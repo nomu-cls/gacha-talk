@@ -218,7 +218,7 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
 
           {showGuide && (
             <div className="px-6 pb-5 space-y-4 animate-fade-in">
-              {[
+              {(adminTab === 'gacha' ? [
                 {
                   step: '① 事前準備',
                   icon: '📝',
@@ -260,7 +260,46 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
                     'トークが終わったら「次のラウンドへ」で次に進む',
                   ],
                 },
-              ].map(({ step, icon, color, items }) => (
+              ] : [
+                {
+                  step: '① アンケート作成',
+                  icon: '📝',
+                  color: '#6c5ce7',
+                  items: [
+                    '誰のアンケートかを選ぶ',
+                    '質問と選択肢を入力する',
+                    '「📦 事前にストックする」で出番待ちに追加',
+                  ],
+                },
+                {
+                  step: '② アンケート開始',
+                  icon: '▶️',
+                  color: '#e84393',
+                  items: [
+                    'ストック一覧から「▶ スタート」を押す',
+                    '→ 全員の画面がアンケート画面に切り替わる',
+                  ],
+                },
+                {
+                  step: '③ リアルタイム投票',
+                  icon: '📈',
+                  color: '#00b894',
+                  items: [
+                    '参加者が投票すると、画面のグラフがリアルタイムで動く',
+                    '管理者は現在の票数を確認しながら進行する',
+                  ],
+                },
+                {
+                  step: '④ アンケート終了',
+                  icon: '🏁',
+                  color: '#f7a44c',
+                  items: [
+                    '「アンケートを終了する」ボタンを押す',
+                    '→ 全員の画面が元の投稿画面に戻る',
+                    '終了した結果は、画面下の履歴に残る',
+                  ],
+                },
+              ]).map(({ step, icon, color, items }) => (
                 <div key={step} className="p-3" style={{
                   background: `${color}08`, borderRadius: '16px',
                   borderLeft: `4px solid ${color}`,
