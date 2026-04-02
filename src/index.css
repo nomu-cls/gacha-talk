@@ -1,0 +1,192 @@
+@import "tailwindcss";
+
+/* ── ガチャトーク — match-proposal Kawaii パステルデザイン ── */
+
+@layer base {
+  :root {
+    /* パステルグラデーション背景 */
+    --bg: #fef6f0;
+    --bg2: #fdf2f8;
+    --bg3: #f0e6ff;
+    --card: rgba(255,255,255,0.85);
+    --card-shadow: 6px 6px 16px rgba(0,0,0,0.05), -3px -3px 8px rgba(255,255,255,0.8);
+    --card-inset: inset 2px 2px 5px rgba(0,0,0,0.04), inset -2px -2px 5px rgba(255,255,255,0.9);
+    --border: rgba(0,0,0,0.04);
+
+    /* キャラカラー */
+    --match-pink: #ff6b9d;
+    --match-bg: #ffe8f0;
+    --match-light: #fff0f5;
+    --nao-orange: #f7a44c;
+    --nao-bg: #fff0db;
+    --nao-light: #fff8ed;
+    --mune-green: #00b894;
+    --mune-bg: #d4f5e2;
+    --mune-light: #edfff5;
+
+    /* 共通カラー */
+    --accent: #e84393;
+    --accent2: #6c5ce7;
+    --purple: #a855f7;
+    --blue: #3b82f6;
+    --text: #3d2c2c;
+    --text2: #7a6262;
+    --text3: #b09090;
+    --radius: 24px;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter', 'Rounded Mplus 1c', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(160deg, #ff9a9e 0%, #fecfef 30%, #a8edea 50%, #fed6e3 70%, #d4fc79 100%);
+    background-size: 400% 400%;
+    animation: gradientShift 20s ease infinite;
+    color: var(--text);
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    25% { background-position: 50% 0%; }
+    50% { background-position: 100% 50%; }
+    75% { background-position: 50% 100%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(232,67,147,0.2); border-radius: 4px; }
+
+  button, input, select, textarea {
+    font-family: inherit;
+    color: inherit;
+  }
+}
+
+@layer components {
+  /* Glass Card */
+  .neu-card {
+    background: rgba(255,255,255,0.85) !important;
+    backdrop-filter: blur(12px) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: 6px 6px 16px rgba(0,0,0,0.05), -3px -3px 8px rgba(255,255,255,0.8) !important;
+    border: 1px solid rgba(255,255,255,0.6) !important;
+  }
+  .neu-inset {
+    background: rgba(255,255,255,0.5) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--card-inset) !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
+  }
+  .neu-btn {
+    background: rgba(255,255,255,0.85) !important;
+    border-radius: 16px !important;
+    box-shadow: 4px 4px 10px rgba(0,0,0,0.05), -2px -2px 6px rgba(255,255,255,0.7) !important;
+    border: 1px solid rgba(255,255,255,0.5) !important;
+    transition: all 0.2s !important;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+  }
+  .neu-btn:hover {
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.06) !important;
+    transform: translateY(1px);
+  }
+  .neu-btn:active {
+    box-shadow: var(--card-inset) !important;
+    transform: scale(0.97);
+  }
+  .neu-btn-primary {
+    background: linear-gradient(135deg, var(--match-pink), var(--nao-orange)) !important;
+    color: #fff !important;
+    border-radius: 16px !important;
+    box-shadow: 4px 4px 14px rgba(232,67,147,0.3), -2px -2px 6px rgba(255,255,255,0.3) !important;
+    border: none !important;
+    font-weight: 800 !important;
+    transition: all 0.2s !important;
+    cursor: pointer;
+  }
+  .neu-btn-primary:hover {
+    box-shadow: 3px 3px 10px rgba(232,67,147,0.4) !important;
+    transform: translateY(1px);
+  }
+  .neu-btn-primary:active {
+    transform: scale(0.96);
+  }
+  .neu-btn-primary:disabled {
+    opacity: 0.3 !important;
+    cursor: not-allowed;
+  }
+
+  /* キャラ別カード */
+  .card-match {
+    background: var(--match-light) !important;
+    border: 2px solid rgba(255,107,157,0.2) !important;
+  }
+  .card-nao {
+    background: var(--nao-light) !important;
+    border: 2px solid rgba(247,164,76,0.2) !important;
+  }
+  .card-mune {
+    background: var(--mune-light) !important;
+    border: 2px solid rgba(0,184,148,0.2) !important;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes popIn {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+@keyframes gachaSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes gachaBounce {
+  0% { transform: scale(1) translateY(0); }
+  100% { transform: scale(1.08) translateY(-8px); }
+}
+@keyframes pulse {
+  0%,100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+@keyframes confetti {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes countPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes wiggle {
+  0%,100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+@layer utilities {
+  .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+  .animate-pop-in { animation: popIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
+  .animate-slide-up { animation: slideUp 0.6s ease-out forwards; }
+  .animate-float { animation: float 3s ease-in-out infinite; }
+  .animate-pulse-count { animation: countPulse 0.3s ease; }
+  .animate-wiggle { animation: wiggle 0.5s ease-in-out infinite; }
+}
