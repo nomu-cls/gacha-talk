@@ -25,6 +25,7 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
   const [pollQuestion, setPollQuestion] = useState('')
   const [pollOptions, setPollOptions] = useState(['', '', ''])
   const [pollVotes, setPollVotes] = useState<Record<string, number>>({})
+  const [pollDetailedVotes, setPollDetailedVotes] = useState<Record<string, Record<number, number>>>({})
   const [pollSpeakerId, setPollSpeakerId] = useState(SPEAKERS[0].id)
 
   const fetchTopics = useCallback(async () => {
@@ -41,13 +42,19 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
     const { data: pollData } = await supabase.from('quick_polls').select('*').order('created_at', { ascending: false })
     if (pollData) setPolls(pollData)
 
-    const activeIds = pollData?.filter(p => p.status === 'active').map(p => p.id) || []
+    const activeIds = pollData?.filter(p => p.status !== 'draft').map(p => p.id) || []
     if (activeIds.length > 0) {
-      const { data: voteData } = await supabase.from('quick_poll_votes').select('poll_id').in('poll_id', activeIds)
+      const { data: voteData } = await supabase.from('quick_poll_votes').select('*').in('poll_id', activeIds)
       if (voteData) {
         const counts: Record<string, number> = {}
-        voteData.forEach(v => { counts[v.poll_id] = (counts[v.poll_id] || 0) + 1 })
+        const detailed: Record<string, Record<number, number>> = {}
+        voteData.forEach(v => { 
+          counts[v.poll_id] = (counts[v.poll_id] || 0) + 1 
+          if (!detailed[v.poll_id]) detailed[v.poll_id] = {}
+          detailed[v.poll_id][v.option_index] = (detailed[v.poll_id][v.option_index] || 0) + 1
+        })
         setPollVotes(counts)
+        setPollDetailedVotes(detailed)
       }
     }
   }, [])
@@ -625,6 +632,48 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
                             style={{ background: 'linear-gradient(135deg, #a855f7, #6c5ce7)' }}>
                             ▶ スタート
                           </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Closed Polls List (History) */}
+              {polls.filter(p => p.status === 'closed').length > 0 && (
+                <div className="pt-6 mt-6 border-t border-purple-100">
+                  <h4 className="text-xs font-black mb-3 flex items-center gap-2" style={{ color: 'var(--text2)' }}>
+                    📊 終了したアンケート結果
+                  </h4>
+                  <div className="space-y-3">
+                    {polls.filter(p => p.status === 'closed').map(cp => {
+                      const sp = SPEAKERS.find(s => s.id === cp.speaker_id) || SPEAKERS[0]
+                      const total = pollVotes[cp.id] || 0
+                      const detailed = pollDetailedVotes[cp.id] || {}
+                      return (
+                        <div key={cp.id} className="p-4 bg-white/60 rounded-xl border border-black/5">
+                          <div className="flex items-start gap-3 mb-3">
+                            <img src={sp.image} className="w-8 h-8 rounded-full object-cover shrink-0 grayscale opacity-60" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-gray-600 leading-tight">{cp.question}</p>
+                              <p className="text-[10px] text-gray-400 mt-1">合計: {total}票</p>
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            {cp.options.map((opt: string, i: number) => {
+                              const count = detailed[i] || 0
+                              const pct = total > 0 ? Math.round((count / total) * 100) : 0
+                              return (
+                                <div key={i} className="relative w-full h-7 bg-gray-100 rounded-lg overflow-hidden flex items-center px-3 z-0">
+                                  <div className="absolute top-0 left-0 bottom-0 bg-purple-200 opacity-50 -z-10" style={{ width: `${pct}%` }} />
+                                  <div className="flex justify-between w-full text-xs">
+                                    <span className="font-bold text-gray-600 truncate mr-2">{String.fromCharCode(65 + i)}: {opt}</span>
+                                    <span className="font-black text-gray-500 shrink-0">{count}票 ({pct}%)</span>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
                         </div>
                       )
                     })}
