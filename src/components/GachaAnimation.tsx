@@ -45,23 +45,72 @@ export function GachaAnimation({ round }: Props) {
 
       {phase === 'spinning' ? (
         <div className="text-center">
-          <div className="relative w-36 h-36 mx-auto mb-6">
+          {/* Capsule spinning animation — ported from BuzzScope */}
+          <div className="relative mx-auto mb-8" style={{ width: 160, height: 160 }}>
+            {/* Outer glow pulse */}
             <div className="absolute inset-0 rounded-full"
-              style={{ border: `3px dashed ${speaker?.color}30`, animation: 'gachaSpin 1.5s linear infinite' }} />
-            <div className="absolute inset-4 rounded-full flex items-center justify-center overflow-hidden"
               style={{
-                background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)',
-                boxShadow: '6px 6px 16px rgba(0,0,0,0.05)',
-                border: '3px solid rgba(255,255,255,0.8)',
-                animation: 'gachaBounce 0.4s ease-in-out infinite alternate',
+                background: `radial-gradient(circle, ${speaker?.color}15 0%, transparent 70%)`,
+                animation: 'pulse 1.5s ease-in-out infinite',
+              }} />
+            {/* Spinning dashed ring */}
+            <div className="absolute rounded-full"
+              style={{
+                inset: 10,
+                border: `6px dashed ${speaker?.color}40`,
+                borderRadius: '50%',
+                animation: 'gachaRingSpin 1s linear infinite',
+              }} />
+            {/* Second ring — counter rotation */}
+            <div className="absolute rounded-full"
+              style={{
+                inset: 24,
+                border: `3px dashed ${speaker?.color}20`,
+                borderRadius: '50%',
+                animation: 'gachaRingSpin 1.8s linear infinite reverse',
+              }} />
+            {/* Capsule ball — half color / half white */}
+            <div className="absolute rounded-full"
+              style={{
+                inset: 36,
+                background: `linear-gradient(135deg, ${speaker?.color} 0%, ${speaker?.color} 50%, #fff 50%, #fff 100%)`,
+                borderRadius: '50%',
+                boxShadow: `0 8px 32px ${speaker?.color}40, inset 0 -4px 12px rgba(0,0,0,0.1), inset 0 4px 8px rgba(255,255,255,0.6)`,
+                animation: 'gachaBounce 0.3s ease-in-out infinite alternate',
               }}>
-              <img src="/gacha_machine.png" className="w-14 h-14 object-contain rounded-2xl" style={{ mixBlendMode: 'multiply' }} />
+              {/* Capsule divider line */}
+              <div style={{
+                position: 'absolute', left: '50%', top: '10%', bottom: '10%',
+                width: 2, background: 'rgba(0,0,0,0.08)', transform: 'translateX(-50%) rotate(45deg)',
+              }} />
+              {/* Capsule highlight */}
+              <div style={{
+                position: 'absolute', top: '15%', left: '20%',
+                width: '25%', height: '20%', borderRadius: '50%',
+                background: 'rgba(255,255,255,0.5)',
+                filter: 'blur(4px)',
+              }} />
             </div>
           </div>
-          <p className="text-lg font-black" style={{ color: speaker?.color, animation: 'pulse 0.8s ease-in-out infinite' }}>
+          {/* Pulsing text */}
+          <p className="text-xl font-black mb-2" style={{ color: speaker?.color, animation: 'gachaPulse 0.5s ease-in-out infinite alternate' }}>
             ガチャ回転中... 🎰
           </p>
-          <p className="text-sm font-bold mt-2" style={{ color: 'var(--text2)' }}>お題が出てきます！</p>
+          <p className="text-sm font-bold" style={{ color: 'var(--text2)' }}>お題が出てきます！</p>
+          {/* Floating particles */}
+          <div className="relative mx-auto mt-4" style={{ width: 200, height: 20 }}>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} style={{
+                position: 'absolute',
+                left: `${15 + i * 18}%`,
+                width: 6, height: 6, borderRadius: '50%',
+                background: speaker?.color,
+                opacity: 0.3,
+                animation: `float ${1.5 + i * 0.3}s ease-in-out infinite`,
+                animationDelay: `${i * 0.2}s`,
+              }} />
+            ))}
+          </div>
         </div>
       ) : (
         <div className="w-full max-w-md space-y-4">

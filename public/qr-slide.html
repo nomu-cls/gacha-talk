@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR待機画面 - ガチャトーク</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap');
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      /* 爽やかで目を引くグラデーション背景 */
+      background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      color: #333;
+    }
+
+    /* ぼかしの効いたカラフルな装飾円 */
+    .bg-circle {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      z-index: 0;
+    }
+    .bg-circle-1 { width: 600px; height: 600px; background: rgba(255,107,157,0.3); top: -100px; left: -100px; }
+    .bg-circle-2 { width: 500px; height: 500px; background: rgba(247,164,76,0.3); bottom: -100px; right: -100px; }
+    .bg-circle-3 { width: 400px; height: 400px; background: rgba(0,184,148,0.2); bottom: 20%; left: 20%; }
+
+    .container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 1400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 80px;
+      padding: 40px;
+    }
+
+    /* 左側のテキスト＆QRエリア */
+    .left-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    .title-area h1 {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.3;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, #2d3436, #636e72);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .title-area .highlight {
+      position: relative;
+      display: inline-block;
+      color: #e84393;
+      -webkit-text-fill-color: #e84393;
+    }
+    
+    .title-area .highlight::after {
+      content: '';
+      position: absolute;
+      bottom: 8px;
+      left: 0;
+      width: 100%;
+      height: 16px;
+      background: rgba(255, 107, 157, 0.3);
+      z-index: -1;
+      transform: skewX(-15deg);
+    }
+
+    .subtitle {
+      font-size: 32px;
+      color: #636e72;
+      font-weight: 700;
+    }
+
+    /* アバターとQRを並べるエリア */
+    .action-area {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(20px);
+      padding: 40px;
+      border-radius: 40px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+      border: 2px solid rgba(255,255,255,0.5);
+      gap: 40px;
+    }
+
+    .qr-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .qr-code {
+      width: 240px;
+      height: 240px;
+      background: #fff;
+      padding: 16px;
+      border-radius: 24px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .qr-code img {
+      width: 100%;
+      height: 100%;
+    }
+
+    .qr-hint {
+      background: #fdcb6e;
+      color: #2d3436;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 8px 24px;
+      border-radius: 999px;
+      animation: bounce 2s infinite;
+      box-shadow: 0 4px 12px rgba(253, 203, 110, 0.4);
+    }
+
+    .speakers {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .speakers-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: #2d3436;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .speaker-icons {
+      display: flex;
+      gap: 16px;
+    }
+
+    .speaker {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.3s ease;
+    }
+    
+    .speaker:hover {
+      transform: translateY(-8px);
+    }
+
+    .speaker img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 6px solid #fff;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      background: #fff;
+    }
+
+    .speaker-name {
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    /* 右側のスマホモックアップ */
+    .mockup-container {
+      position: relative;
+      perspective: 1000px;
+    }
+
+    .mockup {
+      width: 360px;
+      height: 720px;
+      background: #111;
+      border-radius: 48px;
+      padding: 12px;
+      box-shadow: 
+        -20px 20px 40px rgba(0,0,0,0.2),
+        inset 0 0 0 2px #444,
+        inset 0 0 0 6px #222;
+      transform: rotateY(-15deg) rotateX(5deg);
+      transition: transform 0.5s ease;
+      position: relative;
+    }
+    
+    .mockup:hover {
+      transform: rotateY(-5deg) rotateX(2deg) scale(1.02);
+    }
+
+    /* スマホ画面の中身（ iframe的に今のアプリを表示するか、擬似的に作る ） */
+    .mockup-screen {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #ffe8f0 0%, #fff8ed 50%, #edfff5 100%);
+      border-radius: 36px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* スマホのノッチ */
+    .notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 28px;
+      background: #111;
+      border-bottom-left-radius: 16px;
+      border-bottom-right-radius: 16px;
+      z-index: 20;
+    }
+
+    /* ガチャアプリっぽさを出すためのデコレーション */
+    .mockup-ui-header {
+      padding: 40px 20px 20px;
+      text-align: center;
+      background: rgba(255,255,255,0.7);
+      border-bottom: 1px solid rgba(255,255,255,0.5);
+    }
+    
+    .mockup-ui-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .mockup-card {
+      background: rgba(255,255,255,0.9);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .skeleton-line {
+      height: 12px;
+      background: rgba(0,0,0,0.06);
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+
+    /* URLフローティングバッジ */
+    .url-badge {
+      position: absolute;
+      bottom: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff;
+      padding: 12px 24px;
+      border-radius: 999px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #6c5ce7;
+      box-shadow: 0 10px 24px rgba(108, 92, 231, 0.2);
+      white-space: nowrap;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+  </style>
+</head>
+<body>
+
+  <!-- 背景の装飾 -->
+  <div class="bg-circle bg-circle-1"></div>
+  <div class="bg-circle bg-circle-2"></div>
+  <div class="bg-circle bg-circle-3"></div>
+
+  <div class="container">
+    
+    <!-- 左側コンテンツ -->
+    <div class="left-content">
+      <div class="title-area">
+        <p class="subtitle">トモダチだヨ！全員集合 4.5</p>
+        <h1><span class="highlight">登壇者3名</span>に聞いてみたい<br>トークテーマを投稿してね！</h1>
+      </div>
+
+      <div class="action-area">
+        <div class="qr-box">
+          <div class="qr-hint">スマホで読み取って！📱</div>
+          <div class="qr-code">
+            <!-- VercelのURLをQRコード化 -->
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=https://gacha-talk.vercel.app/&color=2d3436" alt="QR Code">
+          </div>
+        </div>
+
+        <div class="speakers">
+          <div class="speakers-title">＼ この3人が答えます ／</div>
+          <div class="speaker-icons">
+            <div class="speaker" style="color: #ff6b9d;">
+              <img src="clay_match.png" alt="マッチ" style="border-color: #ff6b9d;">
+              <span class="speaker-name">小野マッチ</span>
+            </div>
+            <div class="speaker" style="color: #f7a44c;">
+              <img src="clay_nao.png" alt="なおちゃん" style="border-color: #f7a44c;">
+              <span class="speaker-name">なおちゃん</span>
+            </div>
+            <div class="speaker" style="color: #00b894;">
+              <img src="clay_mune.png" alt="むねさん" style="border-color: #00b894;">
+              <span class="speaker-name">むねさん</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右側スマホモックアップ -->
+    <div class="mockup-container">
+      <div class="url-badge">🔗 gacha-talk.vercel.app</div>
+      <div class="mockup">
+        <div class="notch"></div>
+        <div class="mockup-screen">
+          <div class="mockup-ui-header">
+            <h2 style="font-size: 20px; font-weight: 900; margin-bottom: 8px;">🎤 聞きたいことを投稿しよう！</h2>
+            <p style="font-size: 14px; color: #666; font-weight: 700;">登壇者に聞きたいテーマを書いてね</p>
+          </div>
+          <div class="mockup-ui-body">
+            <!-- スピーカー選択風 -->
+            <div style="display: flex; gap: 8px;">
+              <div style="flex:1; height: 80px; background: rgba(255,255,255,0.6); border: 2px solid #ff6b9d40; border-radius: 12px;"></div>
+              <div style="flex:1; height: 80px; background: rgba(255,255,255,0.6); border: 2px solid #f7a44c40; border-radius: 12px;"></div>
+              <div style="flex:1; height: 80px; background: rgba(255,255,255,0.6); border: 2px solid #00b89440; border-radius: 12px;"></div>
+            </div>
+            <!-- サンプルカード風 -->
+            <div class="mockup-card">
+              <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: #f7a44c; opacity: 0.3;"></div>
+                <div>
+                  <div class="skeleton-line" style="width: 80px;"></div>
+                  <div class="skeleton-line" style="width: 140px; margin-bottom: 0;"></div>
+                </div>
+              </div>
+            </div>
+            <div class="mockup-card">
+              <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: #ff6b9d; opacity: 0.3;"></div>
+                <div>
+                  <div class="skeleton-line" style="width: 60px;"></div>
+                  <div class="skeleton-line" style="width: 160px; margin-bottom: 0;"></div>
+                </div>
+              </div>
+            </div>
+            <div class="mockup-card">
+              <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: #00b894; opacity: 0.3;"></div>
+                <div>
+                  <div class="skeleton-line" style="width: 70px;"></div>
+                  <div class="skeleton-line" style="width: 150px; margin-bottom: 0;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

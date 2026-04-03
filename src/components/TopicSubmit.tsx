@@ -85,9 +85,14 @@ export function TopicSubmit({ nickname }: Props) {
             🎤 聞きたいことを投稿しよう！
           </h2>
           <p className="text-sm font-medium" style={{ color: 'var(--text2)' }}>
-            登壇者を選んで、話してほしいテーマや質問を投稿 ✨<br />
+            登壇者に聞きたいテーマ（お題）を書いてね ✨<br />
             ガチャで選ばれたお題にみんなで投票します！
           </p>
+          {!selectedSpeaker && (
+            <div className="mt-4 animate-float" style={{ color: 'var(--accent)' }}>
+              <p className="text-sm font-black">👇 まずは、登壇者を選択してね</p>
+            </div>
+          )}
         </div>
 
         {/* Speaker Selection */}
@@ -128,6 +133,57 @@ export function TopicSubmit({ nickname }: Props) {
           })}
         </div>
 
+        {/* Sample Topics — show when no speaker selected */}
+        {!selectedSpeaker && (
+          <div className="animate-fade-in p-4" style={{
+            background: 'rgba(255,255,255,0.7)', borderRadius: 'var(--radius)',
+            backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.5)',
+            boxShadow: '4px 4px 12px rgba(0,0,0,0.03)',
+          }}>
+            <p className="text-xs font-black text-center mb-3" style={{ color: 'var(--text2)' }}>
+              💡 こんなお題を投稿できるよ！
+            </p>
+            <div className="space-y-2.5">
+              {[
+                { speaker: SPEAKERS[1], text: 'どうしてマッチをスカウトしたの？' },
+                { speaker: SPEAKERS[0], text: '一番テンション上がった案件って何？' },
+                { speaker: SPEAKERS[2], text: '思考の学校に入ったきっかけは？' },
+              ].map((sample, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setSelectedSpeaker(sample.speaker.id)
+                    setText(sample.text)
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all hover:scale-[0.98] active:scale-95"
+                  style={{
+                    background: sample.speaker.light, borderRadius: '16px',
+                    border: `1px solid ${sample.speaker.color}15`,
+                  }}>
+                  <img src={sample.speaker.image}
+                    className="w-8 h-8 rounded-full object-cover shrink-0"
+                    style={{ border: `2px solid ${sample.speaker.color}30` }} />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] font-bold block" style={{ color: sample.speaker.color }}>
+                      {sample.speaker.name.split('（')[0].split('スタイル')[0]} に質問
+                    </span>
+                    <span className="text-xs font-bold" style={{ color: 'var(--text)' }}>
+                      「{sample.text}」
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold shrink-0 px-2 py-1 rounded-lg"
+                    style={{ background: `${sample.speaker.color}10`, color: sample.speaker.color }}>
+                    例
+                  </span>
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-center mt-3 font-bold" style={{ color: 'var(--text3)' }}>
+              ↑ タップするとそのまま投稿できます
+            </p>
+          </div>
+        )}
+
         {/* Submit Form */}
         {currentSpeaker && (
           <form onSubmit={handleSubmit} className="animate-slide-up space-y-3">
@@ -148,7 +204,7 @@ export function TopicSubmit({ nickname }: Props) {
               <textarea
                 value={text}
                 onChange={e => setText(e.target.value)}
-                placeholder="例：3人が出会ったきっかけと、友達になった瞬間のエピソード"
+                placeholder={currentSpeaker.id === 'match' ? '例：一番テンション上がった案件って何？' : currentSpeaker.id === 'nao' ? '例：どうしてマッチをスカウトしたの？' : '例：思考の学校で一番衝撃だった学びは？'}
                 rows={3}
                 autoFocus
                 className="w-full px-4 py-3 text-sm font-medium outline-none resize-none"
