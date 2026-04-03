@@ -275,8 +275,8 @@ export function TopicSubmit({ nickname }: Props) {
                       <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{topic.text}</p>
                     </div>
                     <button onClick={() => deleteMyTopic(topic.id)}
-                      className="text-[10px] font-bold shrink-0 px-2 py-1 rounded-lg opacity-50 hover:opacity-100 transition-opacity"
-                      style={{ color: '#e84393', background: 'rgba(232,67,147,0.08)' }}>
+                      className="text-xs font-bold shrink-0 px-3 py-1.5 rounded-lg transition-opacity active:scale-95"
+                      style={{ color: '#e84393', background: 'rgba(232,67,147,0.1)' }}>
                       削除
                     </button>
                   </div>
