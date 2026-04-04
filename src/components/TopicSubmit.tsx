@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { SPEAKERS } from '../types'
-import type { Topic } from '../types'
+import type { Topic, Speaker } from '../types'
 
 interface Props {
   nickname: string
@@ -13,6 +13,7 @@ export function TopicSubmit({ nickname }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [topics, setTopics] = useState<Topic[]>([])
   const [justSubmitted, setJustSubmitted] = useState(false)
+  const [profileSpeaker, setProfileSpeaker] = useState<Speaker | null>(null)
 
   useEffect(() => {
     fetchTopics()
@@ -101,10 +102,9 @@ export function TopicSubmit({ nickname }: Props) {
             const count = speakerTopicCount(s.id)
             const active = selectedSpeaker === s.id
             return (
-              <button
+              <div
                 key={s.id}
-                onClick={() => setSelectedSpeaker(active ? null : s.id)}
-                className="relative p-3 text-center transition-all"
+                className="relative p-3 text-center transition-all cursor-pointer"
                 style={{
                   background: active ? s.bg : 'rgba(255,255,255,0.7)',
                   borderRadius: 'var(--radius)',
@@ -115,6 +115,7 @@ export function TopicSubmit({ nickname }: Props) {
                   transform: active ? 'scale(0.97)' : 'scale(1)',
                   backdropFilter: 'blur(8px)',
                 }}
+                onClick={() => setSelectedSpeaker(active ? null : s.id)}
               >
                 <img src={s.image} alt={s.name}
                   className="w-12 h-12 rounded-full object-cover mx-auto mb-2"
@@ -128,7 +129,14 @@ export function TopicSubmit({ nickname }: Props) {
                     {count}
                   </div>
                 )}
-              </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setProfileSpeaker(s); }}
+                  className="mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded-lg transition-all active:scale-95"
+                  style={{ background: `${s.color}15`, color: s.color }}
+                >
+                  プロフィール
+                </button>
+              </div>
             )
           })}
         </div>
@@ -296,6 +304,159 @@ export function TopicSubmit({ nickname }: Props) {
           </div>
         )}
       </div>
+
+      {/* Profile Modal */}
+      {profileSpeaker && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6"
+          style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setProfileSpeaker(null) }}
+        >
+          <div
+            className="w-full sm:max-w-md max-h-[85dvh] overflow-y-auto animate-slide-up"
+            style={{
+              background: 'rgba(255,255,255,0.97)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: '28px 28px 0 0',
+              borderTopLeftRadius: '28px',
+              borderTopRightRadius: '28px',
+              border: '1px solid rgba(255,255,255,0.6)',
+              boxShadow: '0 -8px 32px rgba(0,0,0,0.12)',
+            }}
+          >
+            {/* Header */}
+            <div className="relative px-6 pt-6 pb-4" style={{ background: profileSpeaker.light }}>
+              <button
+                onClick={() => setProfileSpeaker(null)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+                style={{ background: 'rgba(0,0,0,0.06)' }}
+              >
+                ✕
+              </button>
+              <div className="flex items-center gap-4">
+                <img
+                  src={profileSpeaker.image}
+                  alt={profileSpeaker.name}
+                  className="w-20 h-20 rounded-2xl object-cover"
+                  style={{
+                    border: `3px solid ${profileSpeaker.color}40`,
+                    boxShadow: `0 4px 16px ${profileSpeaker.color}20`,
+                  }}
+                />
+                <div>
+                  <h3 className="text-lg font-black leading-snug" style={{ color: 'var(--text)' }}>
+                    {profileSpeaker.name}
+                  </h3>
+                  <p className="text-xs font-bold mt-1" style={{ color: profileSpeaker.color }}>
+                    {profileSpeaker.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 space-y-5">
+              {/* Titles */}
+              {profileSpeaker.titles.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-black mb-2 tracking-wider" style={{ color: 'var(--text3)' }}>肩書き</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profileSpeaker.titles.map((t, i) => (
+                      <span
+                        key={i}
+                        className="text-[11px] font-bold px-2.5 py-1 rounded-lg"
+                        style={{
+                          background: `${profileSpeaker.color}10`,
+                          color: profileSpeaker.color,
+                          border: `1px solid ${profileSpeaker.color}15`,
+                        }}
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Bio */}
+              <div>
+                <p className="text-[10px] font-black mb-2 tracking-wider" style={{ color: 'var(--text3)' }}>プロフィール</p>
+                <p className="text-sm leading-relaxed font-medium" style={{ color: 'var(--text)' }}>
+                  {profileSpeaker.bio}
+                </p>
+              </div>
+
+              {/* Highlights */}
+              {profileSpeaker.highlights.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-black mb-2 tracking-wider" style={{ color: 'var(--text3)' }}>
+                    {profileSpeaker.id === 'nao' ? '経歴' : '✨ Before → After'}
+                  </p>
+                  <div className="space-y-1.5">
+                    {profileSpeaker.highlights.map((h, i) => (
+                      <div
+                        key={i}
+                        className="flex items-start gap-2 text-xs font-medium py-1.5 px-3 rounded-lg"
+                        style={{ background: `${profileSpeaker.color}08`, color: 'var(--text)' }}
+                      >
+                        <span className="shrink-0 mt-0.5" style={{ color: profileSpeaker.color }}>
+                          {profileSpeaker.id === 'nao' ? '📌' : '✅'}
+                        </span>
+                        <span>{h}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Links */}
+              {profileSpeaker.links.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-black mb-2 tracking-wider" style={{ color: 'var(--text3)' }}>SNS・リンク</p>
+                  <div className="flex flex-wrap gap-2">
+                    {profileSpeaker.links.map((link, i) => (
+                      <a
+                        key={i}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-all active:scale-95"
+                        style={{
+                          background: `${profileSpeaker.color}12`,
+                          color: profileSpeaker.color,
+                          border: `1px solid ${profileSpeaker.color}20`,
+                        }}
+                      >
+                        <span>{link.icon}</span>
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* CTA */}
+              <button
+                onClick={() => {
+                  setSelectedSpeaker(profileSpeaker.id)
+                  setProfileSpeaker(null)
+                }}
+                className="w-full py-3.5 font-bold text-sm text-white active:scale-[0.97] transition-transform"
+                style={{
+                  background: `linear-gradient(135deg, ${profileSpeaker.color}, ${profileSpeaker.color}cc)`,
+                  borderRadius: '16px',
+                  border: 'none',
+                  boxShadow: `4px 4px 14px ${profileSpeaker.color}30`,
+                }}
+              >
+                🎤 この人に質問する！
+              </button>
+            </div>
+
+            {/* Safe area padding for mobile */}
+            <div className="h-6" />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
