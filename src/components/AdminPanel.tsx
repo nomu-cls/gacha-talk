@@ -658,7 +658,7 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
                             </p>
                           </div>
                           <button onClick={() => deleteTopic(topic.id)}
-                            className="text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity shrink-0 px-2 py-1 rounded-lg"
+                            className="text-xs font-bold opacity-60 hover:opacity-100 transition-opacity shrink-0 px-2 py-1 rounded-lg"
                             style={{ color: '#e84393', background: 'rgba(232,67,147,0.08)' }}>
                             削除
                           </button>
