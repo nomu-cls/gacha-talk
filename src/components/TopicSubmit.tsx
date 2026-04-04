@@ -122,6 +122,20 @@ export function TopicSubmit({ nickname }: Props) {
         {/* Instruction + Form (hidden when closed) */}
         {!isClosed && (
           <>
+        {/* Deadline banner — shown when enabled and still in the future */}
+        {deadlineEnabled && deadlineAt && deadlineAt > new Date() && (
+          <div className="animate-fade-in flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl" style={{
+            background: 'linear-gradient(135deg, rgba(232,67,147,0.08), rgba(243,156,18,0.08))',
+            border: '1px solid rgba(232,67,147,0.2)',
+          }}>
+            <span className="text-sm">⏰</span>
+            <p className="text-xs font-bold" style={{ color: '#e84393' }}>
+              質問受付の締め切り：
+              {deadlineAt.toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </p>
+          </div>
+        )}
+
         <div className="text-center animate-fade-in">
           <h2 className="text-xl font-black mb-2" style={{ color: 'var(--text)' }}>
             🎤 聞きたいことを投稿しよう！
