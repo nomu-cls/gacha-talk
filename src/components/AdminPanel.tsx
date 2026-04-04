@@ -20,6 +20,11 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
   const [gachaCount, setGachaCount] = useState(3)
   const [adminTab, setAdminTab] = useState<'gacha' | 'poll'>('gacha')
 
+  // Submission deadline settings
+  const [deadlineEnabled, setDeadlineEnabled] = useState(false)
+  const [deadlineDatetime, setDeadlineDatetime] = useState('')
+  const [deadlineSaving, setDeadlineSaving] = useState(false)
+
   // Quick Poll States
   const [polls, setPolls] = useState<any[]>([])
   const [pollQuestion, setPollQuestion] = useState('')
@@ -59,10 +64,39 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
     }
   }, [])
 
+  const fetchSettings = useCallback(async () => {
+    const { data } = await supabase.from('gacha_settings').select('*').eq('id', 'global').single()
+    if (data) {
+      setDeadlineEnabled(data.submission_deadline_enabled ?? false)
+      if (data.submission_deadline) {
+        // Convert UTC ISO string to local datetime-local input format
+        const d = new Date(data.submission_deadline)
+        const pad = (n: number) => String(n).padStart(2, '0')
+        setDeadlineDatetime(
+          `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+        )
+      } else {
+        setDeadlineDatetime('')
+      }
+    }
+  }, [])
+
+  async function saveDeadlineSettings(enabled: boolean, datetime: string) {
+    setDeadlineSaving(true)
+    await supabase.from('gacha_settings').upsert({
+      id: 'global',
+      submission_deadline_enabled: enabled,
+      submission_deadline: enabled && datetime ? new Date(datetime).toISOString() : null,
+      updated_at: new Date().toISOString(),
+    })
+    setDeadlineSaving(false)
+  }
+
   useEffect(() => {
     fetchTopics()
     fetchRounds()
     fetchPolls()
+    fetchSettings()
     const ch1 = supabase.channel('admin_topics')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'gacha_topics' }, fetchTopics).subscribe()
     const ch2 = supabase.channel('admin_rounds')
@@ -73,8 +107,10 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'quick_polls' }, fetchPolls).subscribe()
     const ch5 = supabase.channel('admin_quick_poll_votes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'quick_poll_votes' }, fetchPolls).subscribe()
-    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); supabase.removeChannel(ch3); supabase.removeChannel(ch4); supabase.removeChannel(ch5) }
-  }, [fetchTopics, fetchRounds, fetchPolls, onRoundChange])
+    const ch6 = supabase.channel('admin_settings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'gacha_settings' }, fetchSettings).subscribe()
+    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); supabase.removeChannel(ch3); supabase.removeChannel(ch4); supabase.removeChannel(ch5); supabase.removeChannel(ch6) }
+  }, [fetchTopics, fetchRounds, fetchPolls, fetchSettings, onRoundChange])
 
   async function deleteTopic(id: string) {
     await supabase.from('gacha_topics').delete().eq('id', id)
@@ -501,6 +537,88 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
                     ✕
                   </button>
                 </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Submission Deadline Settings */}
+        <div className="p-6" style={{
+          background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)',
+          borderRadius: 'var(--radius)', border: '1px solid rgba(255,255,255,0.6)',
+          boxShadow: '6px 6px 18px rgba(0,0,0,0.04)',
+        }}>
+          <h3 className="text-base font-black mb-4 flex items-center gap-2" style={{ color: 'var(--text)' }}>
+            ⏰ 質問受付の締め切り設定
+          </h3>
+
+          {/* Toggle */}
+          <div className="flex items-center justify-between p-4 rounded-2xl mb-4" style={{
+            background: deadlineEnabled ? 'rgba(232,67,147,0.06)' : 'rgba(0,0,0,0.03)',
+            border: `1px solid ${deadlineEnabled ? 'rgba(232,67,147,0.15)' : 'rgba(0,0,0,0.06)'}`,
+          }}>
+            <div>
+              <p className="text-sm font-black" style={{ color: deadlineEnabled ? '#e84393' : 'var(--text)' }}>
+                {deadlineEnabled ? '🔒 締め切りを設定中' : '✅ 質問受付中（制限なし）'}
+              </p>
+              <p className="text-[10px] mt-0.5" style={{ color: 'var(--text3)' }}>
+                {deadlineEnabled ? '締め切り日時を過ぎると投稿フォームが非表示になります' : 'オンにすると締め切り日時を設定できます'}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                const next = !deadlineEnabled
+                setDeadlineEnabled(next)
+                saveDeadlineSettings(next, deadlineDatetime)
+              }}
+              className="relative w-14 h-7 rounded-full transition-all duration-300 flex-shrink-0 ml-4"
+              style={{
+                background: deadlineEnabled
+                  ? 'linear-gradient(135deg, #e84393, #f39c12)'
+                  : 'rgba(0,0,0,0.12)',
+              }}
+            >
+              <span
+                className="absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300"
+                style={{ left: deadlineEnabled ? 'calc(100% - 26px)' : '2px' }}
+              />
+            </button>
+          </div>
+
+          {/* Datetime picker — only shown when enabled */}
+          {deadlineEnabled && (
+            <div className="space-y-3 animate-fade-in">
+              <label className="text-xs font-black" style={{ color: 'var(--text2)' }}>締め切り日時</label>
+              <div className="flex gap-2">
+                <input
+                  type="datetime-local"
+                  value={deadlineDatetime}
+                  onChange={e => setDeadlineDatetime(e.target.value)}
+                  className="flex-1 px-4 py-3 text-sm font-bold outline-none"
+                  style={{
+                    background: 'white', borderRadius: '14px',
+                    border: '1px solid rgba(232,67,147,0.15)', color: 'var(--text)',
+                  }}
+                />
+                <button
+                  onClick={() => saveDeadlineSettings(deadlineEnabled, deadlineDatetime)}
+                  disabled={deadlineSaving || !deadlineDatetime}
+                  className="px-5 py-3 text-sm font-black text-white disabled:opacity-40 transition-all"
+                  style={{
+                    background: 'linear-gradient(135deg, #e84393, #f39c12)',
+                    borderRadius: '14px', border: 'none',
+                    boxShadow: '3px 3px 10px rgba(232,67,147,0.25)',
+                  }}
+                >
+                  {deadlineSaving ? '保存中...' : '保存'}
+                </button>
+              </div>
+              {deadlineDatetime && (
+                <p className="text-xs font-bold" style={{ color: '#e84393' }}>
+                  {new Date(deadlineDatetime) > new Date()
+                    ? `⏳ 締め切りまで残り ${Math.ceil((new Date(deadlineDatetime).getTime() - Date.now()) / 60000)} 分`
+                    : '🔒 現在、質問受付は締め切られています'}
+                </p>
               )}
             </div>
           )}

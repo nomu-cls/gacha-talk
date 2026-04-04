@@ -14,14 +14,21 @@ export function TopicSubmit({ nickname }: Props) {
   const [topics, setTopics] = useState<Topic[]>([])
   const [justSubmitted, setJustSubmitted] = useState(false)
   const [profileSpeaker, setProfileSpeaker] = useState<Speaker | null>(null)
+  const [deadlineEnabled, setDeadlineEnabled] = useState(false)
+  const [deadlineAt, setDeadlineAt] = useState<Date | null>(null)
 
   useEffect(() => {
     fetchTopics()
+    fetchSettings()
     const channel = supabase
       .channel('topics_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'gacha_topics' }, () => fetchTopics())
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    const settingsCh = supabase
+      .channel('settings_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'gacha_settings' }, () => fetchSettings())
+      .subscribe()
+    return () => { supabase.removeChannel(channel); supabase.removeChannel(settingsCh) }
   }, [])
 
   async function fetchTopics() {
@@ -30,6 +37,14 @@ export function TopicSubmit({ nickname }: Props) {
       .select('*')
       .order('created_at', { ascending: false })
     if (data) setTopics(data as Topic[])
+  }
+
+  async function fetchSettings() {
+    const { data } = await supabase.from('gacha_settings').select('*').eq('id', 'global').single()
+    if (data) {
+      setDeadlineEnabled(data.submission_deadline_enabled ?? false)
+      setDeadlineAt(data.submission_deadline ? new Date(data.submission_deadline) : null)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -56,6 +71,9 @@ export function TopicSubmit({ nickname }: Props) {
   const speakerTopicCount = (speakerId: string) => topics.filter(t => t.speaker_id === speakerId).length
   const currentSpeaker = SPEAKERS.find(s => s.id === selectedSpeaker)
 
+  // Is submission currently closed?
+  const isClosed = deadlineEnabled && deadlineAt !== null && new Date() >= deadlineAt
+
   return (
     <div className="min-h-dvh flex flex-col pb-24">
       {/* Header */}
@@ -80,7 +98,30 @@ export function TopicSubmit({ nickname }: Props) {
       </div>
 
       <div className="max-w-lg mx-auto px-4 pt-6 space-y-6 w-full">
-        {/* Instruction */}
+
+        {/* Deadline closed banner */}
+        {isClosed && (
+          <div className="animate-fade-in text-center py-8 px-6 rounded-3xl" style={{
+            background: 'linear-gradient(135deg, rgba(232,67,147,0.06), rgba(243,156,18,0.06))',
+            border: '2px solid rgba(232,67,147,0.15)',
+          }}>
+            <div className="text-4xl mb-3">🔒</div>
+            <h2 className="text-lg font-black mb-1" style={{ color: '#e84393' }}>質問の受付は終了しました</h2>
+            <p className="text-sm font-medium" style={{ color: 'var(--text2)' }}>
+              ありがとうございました！<br />
+              たくさんの質問をお送りいただきました 🎉
+            </p>
+            {deadlineAt && (
+              <p className="text-[10px] mt-3" style={{ color: 'var(--text3)' }}>
+                締め切り：{deadlineAt.toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Instruction + Form (hidden when closed) */}
+        {!isClosed && (
+          <>
         <div className="text-center animate-fade-in">
           <h2 className="text-xl font-black mb-2" style={{ color: 'var(--text)' }}>
             🎤 聞きたいことを投稿しよう！
@@ -236,6 +277,9 @@ export function TopicSubmit({ nickname }: Props) {
             </div>
           </form>
         )}
+
+          </>
+        )} {/* end !isClosed */}
 
         {/* Topic Count Summary */}
         <div className="p-4 text-center" style={{
