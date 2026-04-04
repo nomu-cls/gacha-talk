@@ -76,7 +76,7 @@ export const SPEAKERS: Speaker[] = [
     highlights: [],
     links: [
       { label: 'Instagram', url: 'https://www.instagram.com/ono_style_match', icon: '📸' },
-      { label: '人生V字回復の法則チャンネル', url: 'https://youtube.com/', icon: '▶️' },
+      { label: '人生V字回復の法則チャンネル', url: 'https://www.youtube.com/@onostyle', icon: '▶️' },
     ],
   },
   {
