@@ -115,7 +115,7 @@ export function GachaAnimation({ round }: Props) {
       ) : (
         <div className="w-full max-w-md space-y-4">
           <h2 className="text-center text-xl font-black mb-6 animate-pop-in" style={{ color: 'var(--text)' }}>
-            ✨ 今回のお題はこの3つ！
+            ✨ 今回のお題はこの{revealedTopics.length}つ！
           </h2>
           {revealedTopics.map((topic, i) => {
             const topicSpeaker = SPEAKERS.find(s => s.id === topic.speaker_id)
