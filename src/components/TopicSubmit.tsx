@@ -16,6 +16,7 @@ export function TopicSubmit({ nickname }: Props) {
   const [profileSpeaker, setProfileSpeaker] = useState<Speaker | null>(null)
   const [deadlineEnabled, setDeadlineEnabled] = useState(false)
   const [deadlineAt, setDeadlineAt] = useState<Date | null>(null)
+  const [now, setNow] = useState(new Date())
 
   useEffect(() => {
     fetchTopics()
@@ -28,7 +29,16 @@ export function TopicSubmit({ nickname }: Props) {
       .channel('settings_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'gacha_settings' }, () => fetchSettings())
       .subscribe()
-    return () => { supabase.removeChannel(channel); supabase.removeChannel(settingsCh) }
+      
+    const intervalId = setInterval(() => {
+      setNow(new Date())
+    }, 1000)
+
+    return () => { 
+      supabase.removeChannel(channel); 
+      supabase.removeChannel(settingsCh);
+      clearInterval(intervalId);
+    }
   }, [])
 
   async function fetchTopics() {
@@ -49,7 +59,7 @@ export function TopicSubmit({ nickname }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!selectedSpeaker || !text.trim()) return
+    if (!selectedSpeaker || !text.trim() || isClosed) return
     setSubmitting(true)
     await supabase.from('gacha_topics').insert({
       speaker_id: selectedSpeaker,
@@ -72,7 +82,7 @@ export function TopicSubmit({ nickname }: Props) {
   const currentSpeaker = SPEAKERS.find(s => s.id === selectedSpeaker)
 
   // Is submission currently closed?
-  const isClosed = deadlineEnabled && deadlineAt !== null && new Date() >= deadlineAt
+  const isClosed = deadlineEnabled && deadlineAt !== null && now >= deadlineAt
 
   return (
     <div className="min-h-dvh flex flex-col pb-24">
