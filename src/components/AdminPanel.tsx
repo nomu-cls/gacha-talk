@@ -593,7 +593,13 @@ export function AdminPanel({ activeRound, onRoundChange, onExitAdmin }: Props) {
                 <input
                   type="datetime-local"
                   value={deadlineDatetime}
-                  onChange={e => setDeadlineDatetime(e.target.value)}
+                  onChange={e => {
+                    const newValue = e.target.value;
+                    setDeadlineDatetime(newValue);
+                    if (newValue) {
+                      saveDeadlineSettings(deadlineEnabled, newValue);
+                    }
+                  }}
                   className="flex-1 px-4 py-3 text-sm font-bold outline-none"
                   style={{
                     background: 'white', borderRadius: '14px',

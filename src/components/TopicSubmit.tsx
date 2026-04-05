@@ -33,11 +33,20 @@ export function TopicSubmit({ nickname }: Props) {
     const intervalId = setInterval(() => {
       setNow(new Date())
     }, 1000)
+    
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchSettings()
+        fetchTopics()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
 
     return () => { 
       supabase.removeChannel(channel); 
       supabase.removeChannel(settingsCh);
       clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibility)
     }
   }, [])
 
@@ -61,6 +70,18 @@ export function TopicSubmit({ nickname }: Props) {
     e.preventDefault()
     if (!selectedSpeaker || !text.trim() || isClosed) return
     setSubmitting(true)
+    
+    // Double check DB before submitting in case of connection drop
+    const { data: currentSettings } = await supabase.from('gacha_settings').select('*').eq('id', 'global').single()
+    if (currentSettings && currentSettings.submission_deadline_enabled && currentSettings.submission_deadline) {
+      if (new Date() >= new Date(currentSettings.submission_deadline)) {
+        setDeadlineEnabled(true)
+        setDeadlineAt(new Date(currentSettings.submission_deadline))
+        setSubmitting(false)
+        return
+      }
+    }
+
     await supabase.from('gacha_topics').insert({
       speaker_id: selectedSpeaker,
       text: text.trim(),
